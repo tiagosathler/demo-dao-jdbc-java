@@ -5,7 +5,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import db.DB;
 import db.DbException;
@@ -68,8 +70,44 @@ public class SellerDaoJDBC implements SellerDao {
 		}
 	}
 	
+	@Override
+	public List<Seller> findAll() {
+		try {
+			ps = conn.prepareStatement(""
+					+ "SELECT s.*, d.Name AS DepName "
+					+ "FROM seller AS s "
+					+ "INNER JOIN department as d "
+					+ "ON s.DepartmentId = d.Id " + "ORDER BY Name;");
+
+			rs = ps.executeQuery();
+
+			List<Seller> sellers = new ArrayList<>();
+			Map<Integer, Department> map = new HashMap<>();
+
+			while (rs.next()) {
+				Integer departmentId = rs.getInt("DepartmentId");
+				Department department = map.get(departmentId);
+
+				if (department == null) {
+					department = instantiateDepartment(rs);
+					map.put(departmentId, department);
+				}
+
+				Seller seller = instantiateSeller(rs, department);
+				sellers.add(seller);
+			}
+
+			return sellers;
+
+		} catch (SQLException e) {
+			throw new DbException("Somthing was wrong: " + e.getMessage());
+		} finally {
+			DB.closePreparedStatment(ps);
+			DB.closeResultSet(rs);
+		}
+	}
+	
 	public List<Seller> findByDepartmentId(Integer id) {
-		List<Seller> list = new ArrayList<>();
 
 		try {
 			ps = conn.prepareStatement(""
@@ -84,22 +122,23 @@ public class SellerDaoJDBC implements SellerDao {
 
 			rs = ps.executeQuery();
 
+			List<Seller> sellers = new ArrayList<>();
 			Department department = null;
 
 			if (rs.next()) {
 				department = instantiateDepartment(rs);
 				Seller seller = instantiateSeller(rs, department);
-				list.add(seller);
+				sellers.add(seller);
 			} else {
 				return null;
 			}
 
 			while (rs.next()) {
 				Seller seller = instantiateSeller(rs, department);
-				list.add(seller);
+				sellers.add(seller);
 			}
 
-			return list;
+			return sellers;
 
 		} catch (SQLException e) {
 			throw new DbException("Something was wrong: " + e.getMessage());
@@ -122,10 +161,5 @@ public class SellerDaoJDBC implements SellerDao {
 		seller.setBirthDate(rs.getDate("BirthDate"));
 		seller.setDepartment(department);
 		return seller;
-	}
-
-	@Override
-	public List<Seller> findAll() {
-		return null;
-	}
+	}	
 }
