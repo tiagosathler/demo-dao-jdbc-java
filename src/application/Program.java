@@ -30,6 +30,13 @@ public class Program {
 		Seller newSeller = new Seller(null, "Greg", "greg@gmail.com", new Date(), 4000.00, department);
 		sellerDao.insert(newSeller);
 		System.out.println(newSeller);
+		
+		System.out.println("=== TEST 5: seller update ====");
+		newSeller.setName("Grieg");
+		newSeller.setBaseSalary(5000.00);
+		newSeller.setEmail("grieg@ymail.com");
+		sellerDao.update(newSeller);
+		System.out.println(newSeller);
 	}
 
 }
