@@ -136,7 +136,7 @@ public class SellerDaoJDBC implements SellerDao {
 		}
 	}
 	
-	public List<Seller> findByDepartmentId(Integer id) {
+	public List<Seller> findByDepartment(Department department) {
 		try {
 			ps = conn.prepareStatement(""
 					+ "SELECT s.*, d.Name as DepName "
@@ -146,23 +146,23 @@ public class SellerDaoJDBC implements SellerDao {
 					+ "WHERE s.DepartmentId = ? "
 					+ "ORDER BY Name;");
 
-			ps.setInt(1, id);
+			ps.setInt(1, department.getId());
 
 			rs = ps.executeQuery();
 
 			List<Seller> sellers = new ArrayList<>();
-			Department department = null;
+			Department foundDepartment = null;
 
 			if (rs.next()) {
-				department = instantiateDepartment(rs);
-				Seller seller = instantiateSeller(rs, department);
+				foundDepartment = instantiateDepartment(rs);
+				Seller seller = instantiateSeller(rs, foundDepartment);
 				sellers.add(seller);
 			} else {
 				return sellers;
 			}
 
 			while (rs.next()) {
-				Seller seller = instantiateSeller(rs, department);
+				Seller seller = instantiateSeller(rs, foundDepartment);
 				sellers.add(seller);
 			}
 
