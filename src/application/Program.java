@@ -2,6 +2,8 @@ package application;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.Scanner;
 
 import model.dao.DaoFactory;
 import model.dao.SellerDao;
@@ -11,6 +13,10 @@ import model.entities.Seller;
 public class Program {
 
 	public static void main(String[] args) {
+		Locale.setDefault(Locale.US);
+
+		Scanner sc = new Scanner(System.in);
+
 		SellerDao sellerDao = DaoFactory.createSellerDao();
 		Department department = new Department(2, "Electronics");
 
@@ -25,18 +31,27 @@ public class Program {
 		System.out.println("=== TEST 3: seller findAll ====");
 		list = sellerDao.findAll();
 		list.forEach(System.out::println);
-		
+
 		System.out.println("=== TEST 4: seller insert ====");
 		Seller newSeller = new Seller(null, "Greg", "greg@gmail.com", new Date(), 4000.00, department);
 		sellerDao.insert(newSeller);
 		System.out.println(newSeller);
-		
+
 		System.out.println("=== TEST 5: seller update ====");
 		newSeller.setName("Grieg");
 		newSeller.setBaseSalary(5000.00);
 		newSeller.setEmail("grieg@ymail.com");
 		sellerDao.update(newSeller);
 		System.out.println(newSeller);
+
+		System.out.println("=== TEST 6: seller delete ====");
+		System.out.print("Enter seller Id for delete test: ");
+		int id = sc.nextInt();
+
+		sellerDao.deleteById(id);
+		System.out.println("Delete complete!");
+
+		sc.close();
 	}
 
 }
