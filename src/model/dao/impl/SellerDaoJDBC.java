@@ -20,6 +20,9 @@ public class SellerDaoJDBC implements SellerDao {
 	private Connection conn;
 	private PreparedStatement ps;
 	private ResultSet rs;
+	
+	private static final String DB_EXCEPTION_MSG = "Something was wrong: ";
+	private static final String UNEXPECTED_ERROR = "Unexpected error! No rows affected!";
 
 	public SellerDaoJDBC(Connection conn) {
 		this.conn = conn;
@@ -31,7 +34,8 @@ public class SellerDaoJDBC implements SellerDao {
 			ps = conn.prepareStatement(""
 					+ "INSERT INTO seller "
 					+ "(Name, Email, BirthDate, BaseSalary, DepartmentId) "
-					+ "VALUES " + "(?, ?, ?, ?, ?);",
+					+ "VALUES "
+					+ "(?, ?, ?, ?, ?);",
 					Statement.RETURN_GENERATED_KEYS);
 
 			ps.setString(1, seller.getName());
@@ -50,65 +54,16 @@ public class SellerDaoJDBC implements SellerDao {
 				}
 				DB.closeResultSet(rs);
 			} else {
-				throw new DbException("Unexpected error! No rows affected!");
+				throw new DbException(UNEXPECTED_ERROR);
 			}
 
 		} catch (SQLException e) {
-			throw new DbException("Something was wrong: " + e.getMessage());
+			throw new DbException(DB_EXCEPTION_MSG + e.getMessage());
 		} finally {
 			DB.closePreparedStatment(ps);
 		}
 	}
-
-	@Override
-	public void update(Seller seller) {
-		try {
-			ps = conn.prepareStatement(""
-					+ "UPDATE seller "
-					+ "SET "
-					+ "Name = ?, "
-					+ "Email = ?, "
-					+ "BirthDate = ?, "
-					+ "BaseSalary = ?, "
-					+ "DepartmentId = ? "
-					+ "WHERE Id = ?;",
-					Statement.RETURN_GENERATED_KEYS);
-
-			ps.setString(1, seller.getName());
-			ps.setString(2, seller.getEmail());
-			ps.setDate(3, new java.sql.Date(seller.getBirthDate().getTime()));
-			ps.setDouble(4, seller.getBaseSalary());
-			ps.setInt(5, seller.getDepartment().getId());
-			ps.setInt(6, seller.getId());
-
-			int affectedRows = ps.executeUpdate();
-
-			if (affectedRows == 0) {
-				throw new DbException("Unexpected error! No rows affected!");
-			}
-
-		} catch (SQLException e) {
-			throw new DbException("Something was wrong: " + e.getMessage());
-		} finally {
-			DB.closePreparedStatment(ps);
-		}
-	}
-
-	@Override
-	public void deleteById(Integer id) {
-		try {
-			ps = conn.prepareStatement("DELETE FROM seller WHERE Id = ?;");
-
-			ps.setInt(1, id);
-
-			ps.executeUpdate();
-		} catch (SQLException e) {
-			throw new DbException("Something was wrong: " + e.getMessage());
-		} finally {
-			DB.closePreparedStatment(ps);
-		}
-	}
-
+	
 	@Override
 	public Seller findById(Integer id) {
 		try {
@@ -130,7 +85,7 @@ public class SellerDaoJDBC implements SellerDao {
 			return null;
 
 		} catch (SQLException e) {
-			throw new DbException("Something was wrong: " + e.getMessage());
+			throw new DbException(DB_EXCEPTION_MSG + e.getMessage());
 		} finally {
 			DB.closePreparedStatment(ps);
 			DB.closeResultSet(rs);
@@ -161,20 +116,67 @@ public class SellerDaoJDBC implements SellerDao {
 					map.put(departmentId, department);
 				}
 
-				Seller seller = instantiateSeller(rs, department);
-				sellers.add(seller);
+				sellers.add(instantiateSeller(rs, department));
 			}
 
 			return sellers;
 
 		} catch (SQLException e) {
-			throw new DbException("Somthing was wrong: " + e.getMessage());
+			throw new DbException(DB_EXCEPTION_MSG + e.getMessage());
 		} finally {
 			DB.closePreparedStatment(ps);
 			DB.closeResultSet(rs);
 		}
 	}
-	
+
+	@Override
+	public void update(Seller seller) {
+		try {
+			ps = conn.prepareStatement(""
+					+ "UPDATE seller "
+					+ "SET "
+					+ "Name = ?, "
+					+ "Email = ?, "
+					+ "BirthDate = ?, "
+					+ "BaseSalary = ?, "
+					+ "DepartmentId = ? "
+					+ "WHERE Id = ?;");
+
+			ps.setString(1, seller.getName());
+			ps.setString(2, seller.getEmail());
+			ps.setDate(3, new java.sql.Date(seller.getBirthDate().getTime()));
+			ps.setDouble(4, seller.getBaseSalary());
+			ps.setInt(5, seller.getDepartment().getId());
+			ps.setInt(6, seller.getId());
+
+			int affectedRows = ps.executeUpdate();
+
+			if (affectedRows == 0) {
+				throw new DbException(UNEXPECTED_ERROR);
+			}
+
+		} catch (SQLException e) {
+			throw new DbException(DB_EXCEPTION_MSG + e.getMessage());
+		} finally {
+			DB.closePreparedStatment(ps);
+		}
+	}
+
+	@Override
+	public void deleteById(Integer id) {
+		try {
+			ps = conn.prepareStatement("DELETE FROM seller WHERE Id = ?;");
+
+			ps.setInt(1, id);
+
+			ps.executeUpdate();
+		} catch (SQLException e) {
+			throw new DbException(DB_EXCEPTION_MSG + e.getMessage());
+		} finally {
+			DB.closePreparedStatment(ps);
+		}
+	}
+
 	public List<Seller> findByDepartment(Department department) {
 		try {
 			ps = conn.prepareStatement(""
@@ -194,24 +196,22 @@ public class SellerDaoJDBC implements SellerDao {
 
 			if (rs.next()) {
 				foundDepartment = instantiateDepartment(rs);
-				Seller seller = instantiateSeller(rs, foundDepartment);
-				sellers.add(seller);
+				sellers.add(instantiateSeller(rs, foundDepartment));
 			} else {
 				return sellers;
 			}
 
 			while (rs.next()) {
-				Seller seller = instantiateSeller(rs, foundDepartment);
-				sellers.add(seller);
+				sellers.add(instantiateSeller(rs, foundDepartment));
 			}
 
 			return sellers;
 
 		} catch (SQLException e) {
-			throw new DbException("Something was wrong: " + e.getMessage());
+			throw new DbException(DB_EXCEPTION_MSG + e.getMessage());
 		}
 	}
-	
+
 	private Department instantiateDepartment(ResultSet rs) throws SQLException {
 		Department department = new Department();
 		department.setId(rs.getInt("DepartmentId"));
@@ -228,5 +228,5 @@ public class SellerDaoJDBC implements SellerDao {
 		seller.setBirthDate(rs.getDate("BirthDate"));
 		seller.setDepartment(department);
 		return seller;
-	}	
+	}
 }
