@@ -6,6 +6,7 @@ import java.util.Locale;
 import java.util.Scanner;
 
 import model.dao.DaoFactory;
+import model.dao.DepartmentDao;
 import model.dao.SellerDao;
 import model.entities.Department;
 import model.entities.Seller;
@@ -16,6 +17,26 @@ public class Program {
 		Locale.setDefault(Locale.US);
 
 		Scanner sc = new Scanner(System.in);
+
+		System.out.println("SELLER CRUD:");
+		System.out.println("------------");
+		System.out.println();
+
+		sellerCRUD(sc);
+
+		System.out.println();
+		System.out.println("***********");
+
+		System.out.println("DEPARTMENT CRUD:");
+		System.out.println("----------------");
+		System.out.println();
+
+		departmentCRUD(sc);
+
+		sc.close();
+	}
+
+	private static void sellerCRUD(Scanner sc) {
 
 		SellerDao sellerDao = DaoFactory.createSellerDao();
 		Department department = new Department(2, "Electronics");
@@ -50,8 +71,34 @@ public class Program {
 
 		sellerDao.deleteById(id);
 		System.out.println("Delete complete!");
-
-		sc.close();
 	}
 
+	private static void departmentCRUD(Scanner sc) {
+		DepartmentDao departmentDao = DaoFactory.createDepartmentDao();
+
+		System.out.println("=== TEST 1: department findById ====");
+		Department department = departmentDao.findById(3);
+		System.out.println(department);
+
+		System.out.println("=== TEST 2: department findAll ====");
+		List<Department> list = departmentDao.findAll();
+		list.forEach(System.out::println);
+
+		System.out.println("=== TEST 3: department insert ====");
+		Department newDepartment = new Department(null, "Software");
+		departmentDao.insert(newDepartment);
+		System.out.println(newDepartment);
+
+		System.out.println("=== TEST 4: department update ====");
+		newDepartment.setName("Hardware");
+		departmentDao.update(newDepartment);
+		System.out.println(newDepartment);
+
+		System.out.println("=== TEST 5: department delete ====");
+		System.out.print("Enter department Id for delete test: ");
+		int id = sc.nextInt();
+
+		departmentDao.deleteById(id);
+		System.out.println("Delete complete!");
+	}
 }
